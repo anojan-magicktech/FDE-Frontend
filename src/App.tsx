@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import { setLenisInstance } from 'lib/lenis';
+import { saveScrollY } from 'lib/scrollMemory';
 import { Provider } from 'react-redux';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'components/ui/sonner';
 import { Navigation } from 'components/layout/Navigation';
 import { Footer } from 'components/layout/Footer';
@@ -12,7 +13,39 @@ import ScrollToTop from 'components/layout/ScrollToTop';
 import { Home } from 'pages/Home';
 import { ServicesPage } from 'pages/ServicesPage';
 import { ProjectsPage } from 'pages/ProjectsPage';
+import { AdminLogin } from 'pages/AdminLogin';
+import { AdminDashboard } from 'pages/AdminDashboard';
 import { store } from 'store/store';
+
+function MainLayout({ onContactClick }: { onContactClick: () => void }) {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <>
+      <Navigation onContactClick={onContactClick} />
+      <main className="pt-16 lg:pt-20">
+        <Routes>
+          <Route path="/" element={<Home onContactClick={onContactClick} />} />
+          <Route path="/services" element={<ServicesPage onContactClick={onContactClick} />} />
+          <Route path="/projects" element={<ProjectsPage onContactClick={onContactClick} />} />
+        </Routes>
+        <Footer />
+      </main>
+      <FloatingContact />
+    </>
+  );
+}
 
 function App() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -20,32 +53,52 @@ function App() {
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: 1.0,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1,
       syncTouch: false,
-      touchMultiplier: 2,
+      touchMultiplier: 1.5,
       infinite: false,
+      autoResize: true,
     });
 
     lenisRef.current = lenis;
     setLenisInstance(lenis);
 
+    let rafId: number;
+
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
       setLenisInstance(null);
     };
+  }, []);
+
+  // Continuously remember scroll position so a hard refresh can animate
+  // from where you actually were back up to the top.
+  useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        saveScrollY(window.scrollY);
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -69,18 +122,7 @@ function App() {
       <Router>
         <ScrollToTop />
         <div className="min-h-screen w-full" data-testid="app-container">
-          <Navigation onContactClick={handleContactModalOpen} />
-
-          <main className="pt-16 lg:pt-20">
-            <Routes>
-              <Route path="/" element={<Home onContactClick={handleContactModalOpen} />} />
-              <Route path="/services" element={<ServicesPage onContactClick={handleContactModalOpen} />} />
-              <Route path="/projects" element={<ProjectsPage onContactClick={handleContactModalOpen} />} />
-            </Routes>
-
-            <Footer />
-          </main>
-          <FloatingContact />
+          <MainLayout onContactClick={handleContactModalOpen} />
           <ContactModal isOpen={isContactModalOpen} onClose={handleContactModalClose} />
           <Toaster position="top-right" richColors />
         </div>

@@ -41,10 +41,23 @@ export const Navigation: React.FC<NavigationProps> = ({ onContactClick }) => {
     getLenisInstance()?.start();
   };
 
+  const dedicatedRoutes: Record<string, string> = {
+    services: '/services',
+    projects: '/projects',
+  };
+
   const scrollToSection = (id: string) => {
     closeMobileMenu();
 
     const targetId = id === 'gallery' ? 'projects' : id;
+
+    // Services/Projects have their own dedicated pages — if we're on one of
+    // those pages (or the other one), go straight there instead of detouring
+    // through Home.
+    if (location.pathname !== '/' && dedicatedRoutes[targetId]) {
+      navigate(dedicatedRoutes[targetId]);
+      return;
+    }
 
     const scrollNow = () => {
       const element = document.getElementById(targetId);
@@ -111,18 +124,18 @@ export const Navigation: React.FC<NavigationProps> = ({ onContactClick }) => {
   const navLinks: NavLink[] = [
     { label: 'About', id: 'about' },
     { label: 'Services', id: 'services' },
+    { label: '3D Plans', id: '3d-planning' },
     { label: 'Projects', id: 'gallery' },
     { label: 'Testimonials', id: 'testimonials' },
+    { label: 'Our Value', id: 'why-choose-us' },
+    { label: 'Team', id: 'team' },
     { label: 'Contact', id: 'contact' },
   ];
 
   return (
     <>
       {/* Main Navigation */}
-      <motion.nav
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      <nav
         className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#050505]"
         data-testid="main-navigation"
       >
@@ -207,7 +220,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onContactClick }) => {
             </button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Sidebar Menu */}
       <AnimatePresence>

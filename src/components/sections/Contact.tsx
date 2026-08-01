@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { MapPin, Phone, Mail, type LucideIcon } from 'lucide-react';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 interface ContactProps {
   onContactClick: () => void;
@@ -36,10 +36,8 @@ const contactDetails: ContactDetail[] = [
 ];
 
 export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.15,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.12 });
+  const [isMapLoaded, setIsMapLoaded] = React.useState(false);
 
   return (
     <section
@@ -53,10 +51,10 @@ export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          variants={revealVariants.fadeUp}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+          className="text-center mb-16 transform-gpu"
         >
           <div className="inline-flex items-center px-4 py-1.5 border border-royal-blue/30 bg-royal-blue/10 rounded-full mb-6">
             <span className="text-royal-blue text-xs tracking-[0.2em] font-body font-semibold uppercase">
@@ -74,12 +72,15 @@ export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch"
+          variants={revealVariants.staggerContainer}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+        >
           {/* Details side */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
+            variants={revealVariants.fadeLeft}
             className="flex flex-col justify-between space-y-6 transform-gpu"
           >
             <div className="space-y-6">
@@ -91,9 +92,7 @@ export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
                     href={detail.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ delay: index * 0.08 }}
+                    variants={revealVariants.staggerItem}
                     className="flex items-start space-x-6 p-6 bg-white border border-zinc-300 hover:border-zinc-400 hover:shadow-lg hover:shadow-zinc-400/20 rounded-xl transition-all duration-300 group transform-gpu"
                     data-testid={`contact-detail-${index}`}
                   >
@@ -118,9 +117,7 @@ export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
             </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.4 }}
+              variants={revealVariants.staggerItem}
               className="pt-4"
             >
               <button
@@ -135,23 +132,22 @@ export const Contact: React.FC<ContactProps> = ({ onContactClick }) => {
 
           {/* Map side */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.15 }}
+            variants={revealVariants.fadeRight}
             className="relative h-[350px] lg:h-auto min-h-[350px] overflow-hidden border border-zinc-300 rounded-xl shadow-lg transform-gpu"
           >
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31553.647542893892!2d80.0!3d9.8!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwNDgnMDAuMCJOIDgwwrAwMCcwMC4wIkU!5e0!3m2!1sen!2slk!4v1234567890"
               width="100%"
               height="100%"
-              style={{ border: 0, filter: 'grayscale(0.1) contrast(1.05)' }}
+              style={{ border: 0, opacity: isMapLoaded ? 1 : 0, transition: 'opacity 0.5s ease-out' }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Future Design Engineering Location"
+              onLoad={() => setIsMapLoaded(true)}
             />
           </motion.div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { Award, Shield, Users, Clock, type LucideIcon } from 'lucide-react';
+import MagicRings from 'components/ui/MagicRings';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 interface Feature {
   icon: LucideIcon;
@@ -37,10 +38,7 @@ const features: Feature[] = [
 ];
 
 export const WhyChooseUs: React.FC = () => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.15,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.12 });
 
   return (
     <section
@@ -49,6 +47,17 @@ export const WhyChooseUs: React.FC = () => {
       ref={ref}
       data-testid="why-choose-us-section"
     >
+      {/* ReactBits MagicRings Animation Background Layer */}
+      <MagicRings
+        color="#d4af37"
+        colorTwo="#4169e1"
+        ringCount={5}
+        speed={1}
+        lineThickness={2}
+        followMouse={true}
+        mouseInfluence={0.2}
+        opacity={0.45}
+      />
       {/* Subtle lines pattern background */}
       <div className="absolute inset-0 opacity-[0.1] pointer-events-none">
         <div
@@ -62,10 +71,10 @@ export const WhyChooseUs: React.FC = () => {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          variants={revealVariants.fadeUp}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+          className="text-center mb-16 transform-gpu"
         >
           <div className="inline-flex items-center px-4 py-1.5 border border-royal-blue/30 bg-royal-blue/5 rounded-full mb-6">
             <span className="text-royal-blue-bright text-xs tracking-[0.2em] font-body font-semibold uppercase">
@@ -83,15 +92,18 @@ export const WhyChooseUs: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          variants={revealVariants.staggerContainer}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+        >
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.08 }}
+                variants={revealVariants.staggerItemScale}
                 className="group relative p-6 rounded-xl bg-[#0c0c0c] border border-white/5 hover:border-gold/30 hover:shadow-xl hover:shadow-gold/5 transition-all duration-300 text-center transform-gpu"
                 data-testid={`feature-${index}`}
               >
@@ -114,7 +126,7 @@ export const WhyChooseUs: React.FC = () => {
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

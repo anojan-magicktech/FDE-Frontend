@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { Quote, Star, Twitter, Linkedin, Youtube, Facebook, MapPin, Instagram } from 'lucide-react';
 import { getImageUrl } from 'services/api';
 import { useAppDispatch, useAppSelector } from 'store/hooks';
 import { fetchTestimonials } from 'store/testimonialsSlice';
 import type { Testimonial } from 'types/testimonial';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 interface ReviewCardProps {
   review: Testimonial;
@@ -34,7 +34,7 @@ const getPlatformIcon = (platform?: string) => {
 
 const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
   return (
-    <div className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] p-6 mx-4 bg-zinc-50 border border-zinc-200/80 hover:border-gold/40 rounded-xl shadow-md hover:shadow-zinc-200/40 transition-all duration-300 relative overflow-hidden group snap-center">
+    <div className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] p-6 mx-4 bg-zinc-50 border border-zinc-200/80 hover:border-gold/40 rounded-xl shadow-md hover:shadow-zinc-200/40 transition-all duration-300 relative overflow-hidden group snap-center transform-gpu">
       <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-royal-blue to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div className="flex justify-between items-start mb-6">
@@ -82,10 +82,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
 export const Testimonials: React.FC = () => {
   const dispatch = useAppDispatch();
   const reviews = useAppSelector((state) => state.testimonials.items);
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.1 });
 
   useEffect(() => {
     dispatch(fetchTestimonials());
@@ -116,15 +113,15 @@ export const Testimonials: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center"
+          variants={revealVariants.fadeUp}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+          className="text-center transform-gpu"
         >
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.2 }}
+            variants={revealVariants.fadeDown}
+            initial="hidden"
+            animate={isRevealed ? 'visible' : 'hidden'}
             className="inline-flex items-center px-4 py-1.5 border border-royal-blue/30 bg-royal-blue/5 rounded-full mb-6"
           >
             <span className="text-royal-blue-bright text-xs tracking-[0.2em] font-body font-semibold uppercase">
@@ -165,7 +162,12 @@ export const Testimonials: React.FC = () => {
     }
 `}</style>
 
-      <div className="relative w-full hover-pause z-10">
+      <motion.div
+        variants={revealVariants.fadeUp}
+        initial="hidden"
+        animate={isRevealed ? 'visible' : 'hidden'}
+        className="relative w-full hover-pause z-10 transform-gpu"
+      >
         {/* Gradient Masks for Fade Effect - matched to white background */}
         <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-10 bg-gradient-to-r from-white via-white/75 to-transparent pointer-events-none" />
         <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-10 bg-gradient-to-l from-white via-white/75 to-transparent pointer-events-none" />
@@ -176,7 +178,7 @@ export const Testimonials: React.FC = () => {
             <ReviewCard key={`${review.id || 'review'}-${index}`} review={review} />
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };

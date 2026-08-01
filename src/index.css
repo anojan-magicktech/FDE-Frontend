@@ -109,3 +109,33 @@ body.mobile-menu-open .floating-contact-container {
   pointer-events: none !important;
   visibility: hidden !important;
 }
+
+/* Reserve the scrollbar's gutter permanently so hiding it (Lenis's
+   lenis-stopped rule below, or any modal's scroll lock) never changes the
+   page's available width — this is what was causing the page to visibly
+   shrink/shift whenever a popup opened or closed. */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Lenis Smooth Scroll Recommended CSS */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}

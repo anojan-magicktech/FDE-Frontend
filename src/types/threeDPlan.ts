@@ -1,14 +1,11 @@
-export interface ThreeDPlanDetails {
-  software: string;
-  scale: string;
-  phase: string;
-}
-
 export interface ThreeDPlan {
   id: number;
   title: string;
   category: string;
-  image: string;
+  image?: string;
   description: string;
-  details: ThreeDPlanDetails;
+  software?: string;
+  scale?: string;
+  phase?: string;
+  order?: number;
 }

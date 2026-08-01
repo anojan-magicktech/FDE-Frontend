@@ -18,7 +18,6 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onContactClick }) =>
           </>
         }
         subtitle="Engineering Masterpieces"
-        backgroundImage="url('https://images.unsplash.com/photo-1768503037383-27954a510d90?auto=format&fit=crop&w=1600&q=75')"
       />
       <div className="pt-0">
         <Projects hideHeader={true} />

@@ -1,18 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { ArrowRight, X, Maximize2, Cpu, Ruler, Layout } from 'lucide-react';
+import Autoplay from 'embla-carousel-autoplay';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from 'components/ui/carousel';
 import { getLenisInstance } from 'lib/lenis';
-import { plansData } from 'data/threeDPlans';
+import { getImageUrl } from 'services/api';
+import { useAppDispatch, useAppSelector } from 'store/hooks';
+import { fetchThreeDPlans } from 'store/threeDPlansSlice';
 import type { ThreeDPlan } from 'types/threeDPlan';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 export const ThreeDPlans: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const plansData = useAppSelector((state) => state.threeDPlans.items);
   const [selectedPlan, setSelectedPlan] = useState<ThreeDPlan | null>(null);
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+  const [loadedImageIds, setLoadedImageIds] = useState<Set<number>>(new Set());
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.08 });
+  const autoplayRef = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+
+  const markImageLoaded = (id: number) => {
+    setLoadedImageIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  };
+
+  useEffect(() => {
+    dispatch(fetchThreeDPlans());
+  }, [dispatch]);
 
   // Control Lenis scrolling when plan details modal is open
   useEffect(() => {
@@ -43,15 +57,15 @@ export const ThreeDPlans: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            variants={revealVariants.fadeUp}
+            initial="hidden"
+            animate={isRevealed ? 'visible' : 'hidden'}
+            className="text-center mb-16 transform-gpu"
           >
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.2 }}
+              variants={revealVariants.fadeDown}
+              initial="hidden"
+              animate={isRevealed ? 'visible' : 'hidden'}
               className="inline-flex items-center px-4 py-1.5 border border-royal-blue/30 bg-royal-blue/5 rounded-full mb-6"
             >
               <span className="text-royal-blue-bright text-xs tracking-[0.2em] font-body font-semibold uppercase">
@@ -70,31 +84,40 @@ export const ThreeDPlans: React.FC = () => {
           </motion.div>
 
           {/* Carousel Container */}
-          <div className="relative px-4">
+          <motion.div
+            variants={revealVariants.staggerContainer}
+            initial="hidden"
+            animate={isRevealed ? 'visible' : 'hidden'}
+            className="relative px-4 transform-gpu"
+          >
             <Carousel
               opts={{
                 align: 'start',
                 loop: true,
               }}
+              plugins={[autoplayRef.current]}
               className="w-full max-w-5xl mx-auto"
             >
               <CarouselContent className="-ml-4">
-                {plansData.map((plan, index) => (
+                {plansData.map((plan) => (
                   <CarouselItem key={plan.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={inView ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      variants={revealVariants.staggerItemScale}
                       whileHover={{ y: -6 }}
-                      className="group bg-zinc-50 border border-zinc-200/80 hover:border-gold/40 hover:shadow-xl hover:shadow-zinc-200/40 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer"
+                      className="group bg-zinc-50 border border-zinc-200/80 hover:border-gold/40 hover:shadow-xl hover:shadow-zinc-200/40 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer transform-gpu"
                       onClick={() => setSelectedPlan(plan)}
                     >
                       <div className="aspect-[4/3] overflow-hidden bg-zinc-950 relative">
                         <img
-                          src={plan.image}
+                          src={getImageUrl(plan.image)}
                           alt={plan.title}
-                          className="w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105"
+                          className="w-full h-full object-cover group-hover:scale-105"
+                          style={{
+                            opacity: loadedImageIds.has(plan.id) ? 1 : 0,
+                            transition: 'opacity 0.4s ease-out, transform 1.2s ease-out',
+                          }}
                           loading="lazy"
+                          onLoad={() => markImageLoaded(plan.id)}
                         />
                         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                           <div className="flex items-center justify-center p-3 rounded-full bg-gold text-black shadow-lg">
@@ -126,7 +149,7 @@ export const ThreeDPlans: React.FC = () => {
               <CarouselPrevious className="absolute left-[-2rem] top-1/2 -translate-y-1/2 bg-white hover:bg-gold text-zinc-900 hover:text-black border-zinc-200 w-10 h-10 transition-all duration-300" />
               <CarouselNext className="absolute right-[-2rem] top-1/2 -translate-y-1/2 bg-white hover:bg-gold text-zinc-900 hover:text-black border-zinc-200 w-10 h-10 transition-all duration-300" />
             </Carousel>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -160,7 +183,7 @@ export const ThreeDPlans: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2">
                 {/* Image Side */}
                 <div className="bg-[#050505] relative aspect-[4/3] lg:aspect-auto min-h-[300px] lg:min-h-[500px] flex items-center justify-center">
-                  <img src={selectedPlan.image} alt={selectedPlan.title} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(selectedPlan.image)} alt={selectedPlan.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
                 </div>
 
@@ -186,21 +209,21 @@ export const ThreeDPlans: React.FC = () => {
                         <Cpu size={12} />
                         <span>Software</span>
                       </div>
-                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.details.software}</p>
+                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.software}</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-gold text-xs font-semibold uppercase tracking-wider">
                         <Ruler size={12} />
                         <span>Scale</span>
                       </div>
-                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.details.scale}</p>
+                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.scale}</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-gold text-xs font-semibold uppercase tracking-wider">
                         <Layout size={12} />
                         <span>Phase</span>
                       </div>
-                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.details.phase}</p>
+                      <p className="text-white font-medium text-sm leading-normal">{selectedPlan.phase}</p>
                     </div>
                   </div>
                 </div>

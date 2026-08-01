@@ -1,57 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { Building2, Award, Users, CheckCircle, type LucideIcon } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from 'store/hooks';
 import { fetchCompletedProjectCount } from 'store/statsSlice';
+import CountUp from 'components/ui/CountUp';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 const currentYear = new Date().getFullYear();
 const startYear = 2024;
-const yearsExperience = currentYear - startYear;
-
-interface CounterProps {
-  target: number;
-  suffix: string;
-  inView: boolean;
-}
-
-const Counter: React.FC<CounterProps> = ({ target, suffix, inView }) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-
-    let startTime: number | undefined;
-    const duration = 1000; // Optimized duration to prevent CPU thrashing on scroll
-    let animationFrameId: number | undefined;
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const progress = Math.min((currentTime - startTime) / duration, 1);
-
-      setCount(Math.floor(progress * target));
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [target, inView]);
-
-  return (
-    <span>
-      {count}
-      {suffix}
-    </span>
-  );
-};
+const yearsExperience = Math.max(2, currentYear - startYear);
 
 interface Stat {
   icon: LucideIcon;
@@ -64,19 +21,18 @@ interface Stat {
 export const StatsSection: React.FC = () => {
   const dispatch = useAppDispatch();
   const projectCount = useAppSelector((state) => state.stats.projectCount);
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.2,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.15 });
 
   useEffect(() => {
     dispatch(fetchCompletedProjectCount());
   }, [dispatch]);
 
+  const displayProjectCount = projectCount > 0 ? projectCount : 500;
+
   const stats: Stat[] = [
     {
       icon: Building2,
-      number: projectCount,
+      number: displayProjectCount,
       suffix: '+',
       label: 'Completed Projects',
       description: 'Delivered across Sri Lanka',
@@ -122,16 +78,19 @@ export const StatsSection: React.FC = () => {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+          variants={revealVariants.staggerContainer}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+        >
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                className="text-center group p-6 rounded-xl bg-gradient-to-b from-[#0c0c0c] to-[#080808] border border-white/5 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300"
+                variants={revealVariants.staggerItemScale}
+                className="text-center group p-6 rounded-xl bg-gradient-to-b from-[#0c0c0c] to-[#080808] border border-white/5 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300 transform-gpu"
                 data-testid={`stat-card-${index}`}
               >
                 {/* Icon Wrapper */}
@@ -145,16 +104,22 @@ export const StatsSection: React.FC = () => {
 
                 {/* Counter */}
                 <div className="font-heading text-4xl sm:text-5xl font-bold text-gold mb-2 tracking-tight">
-                  <Counter target={stat.number} suffix={stat.suffix} inView={inView} />
+                  <CountUp
+                    to={stat.number}
+                    suffix={stat.suffix}
+                    duration={1.8}
+                    delay={index * 0.15}
+                    startWhen={isRevealed}
+                  />
                 </div>
 
                 {/* Description */}
                 <h3 className="font-heading text-lg font-bold text-white mb-2 tracking-wide">{stat.label}</h3>
-                <p className="text-white/50 text-xs sm:text-sm font-body font-light leading-relaxed">{stat.description}</p>
+                <p className="text-white/60 text-xs sm:text-sm font-body font-light leading-relaxed">{stat.description}</p>
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

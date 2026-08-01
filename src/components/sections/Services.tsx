@@ -37,6 +37,7 @@ import { AspectRatio } from 'components/ui/aspect-ratio';
 import { useAppDispatch, useAppSelector } from 'store/hooks';
 import { fetchServices } from 'store/servicesSlice';
 import type { Service } from 'types/service';
+import MagicRings from 'components/ui/MagicRings';
 
 const iconMap: Record<string, LucideIcon> = {
   Home,
@@ -118,6 +119,18 @@ export const Services: React.FC<ServicesProps> = ({ isPreview = false, hideHeade
         ref={ref}
         data-testid="services-section"
       >
+        {!hideHeader && (
+          <MagicRings
+            color="#d4af37"
+            colorTwo="#4169e1"
+            ringCount={5}
+            speed={1}
+            lineThickness={2}
+            followMouse={true}
+            mouseInfluence={0.2}
+            opacity={0.45}
+          />
+        )}
         {/* Ambient glow decoration */}
         <div className="absolute left-1/4 top-1/4 w-[500px] h-[500px] bg-royal-blue/5 rounded-full blur-3xl opacity-50 z-0 pointer-events-none" />
         <div className="absolute right-1/4 bottom-1/4 w-[400px] h-[400px] bg-gold/5 rounded-full blur-3xl opacity-30 z-0 pointer-events-none" />

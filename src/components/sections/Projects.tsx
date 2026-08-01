@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { ArrowRight, X, Calendar, MapPin, User, Tag, Star, Quote, Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from 'services/api';
@@ -10,6 +9,8 @@ import { AspectRatio } from 'components/ui/aspect-ratio';
 import { useAppDispatch, useAppSelector } from 'store/hooks';
 import { fetchProjects } from 'store/projectsSlice';
 import type { Project } from 'types/project';
+import MagicRings from 'components/ui/MagicRings';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 interface ProjectsProps {
   isPreview?: boolean;
@@ -20,10 +21,7 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
   const dispatch = useAppDispatch();
   const projects = useAppSelector((state) => state.projects.items);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.08 });
 
   // Search and Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,10 +71,23 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
     <>
       <section
         id="projects"
-        className="py-24 sm:py-32 bg-[#050505] text-white border-y border-white/5 relative overflow-hidden"
+        className="relative py-24 sm:py-32 bg-[#050505] overflow-hidden"
         ref={ref}
         data-testid="projects-section"
       >
+        {!hideHeader && (
+          <MagicRings
+            color="#d4af37"
+            colorTwo="#4169e1"
+            ringCount={5}
+            speed={1}
+            lineThickness={2}
+            followMouse={true}
+            mouseInfluence={0.2}
+            opacity={0.45}
+          />
+        )}
+
         {/* Decorative subtle light color highlights */}
         <div className="absolute right-10 top-1/3 w-80 h-80 bg-gold/5 rounded-full blur-3xl opacity-30 z-0 pointer-events-none" />
         <div className="absolute left-10 bottom-1/3 w-96 h-96 bg-royal-blue/5 rounded-full blur-3xl opacity-40 z-0 pointer-events-none" />
@@ -84,10 +95,10 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {!hideHeader && (
             <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-16"
+              variants={revealVariants.fadeUp}
+              initial="hidden"
+              animate={isRevealed ? 'visible' : 'hidden'}
+              className="text-center mb-16 transform-gpu"
             >
               <div className="inline-flex items-center px-4 py-1.5 border border-royal-blue bg-royal-blue/10 rounded-full mb-6">
                 <span className="text-royal-blue text-xs tracking-[0.2em] font-body font-bold uppercase">
@@ -109,10 +120,10 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
           {/* Search and Filter Section - Redesigned to Light Premium Theme */}
           {!isPreview && (
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="mb-16 p-6 rounded-xl bg-[#0c0c0c] border border-white/5 shadow-2xl space-y-4"
+              variants={revealVariants.fadeUp}
+              initial="hidden"
+              animate={isRevealed ? 'visible' : 'hidden'}
+              className="mb-16 p-6 rounded-xl bg-[#0c0c0c] border border-white/5 shadow-2xl space-y-4 transform-gpu"
             >
               <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
                 {/* Search Bar */}
@@ -190,13 +201,16 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
           )}
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={revealVariants.staggerContainer}
+            initial="hidden"
+            animate={isRevealed ? 'visible' : 'hidden'}
+          >
             {displayedProjects.map((project, index) => (
               <motion.div
                 key={project.id || index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.08 }}
+                variants={revealVariants.staggerItemScale}
                 whileHover={{ y: -6 }}
                 className="group relative overflow-hidden cursor-pointer rounded-xl bg-[#0c0c0c] border border-white/5 hover:border-gold/30 hover:shadow-xl hover:shadow-gold/5 transition-all duration-300 transform-gpu"
                 onClick={() => setSelectedProject(project)}
@@ -261,14 +275,14 @@ export const Projects: React.FC<ProjectsProps> = ({ isPreview = false, hideHeade
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {isPreview && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="flex justify-center mt-16"
+              variants={revealVariants.fadeUp}
+              initial="hidden"
+              animate={isRevealed ? 'visible' : 'hidden'}
+              className="flex justify-center mt-16 transform-gpu"
             >
               <Link
                 to="/projects"

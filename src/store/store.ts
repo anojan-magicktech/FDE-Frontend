@@ -5,6 +5,7 @@ import teamReducer from './teamSlice';
 import testimonialsReducer from './testimonialsSlice';
 import statsReducer from './statsSlice';
 import contactReducer from './contactSlice';
+import threeDPlansReducer from './threeDPlansSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     testimonials: testimonialsReducer,
     stats: statsReducer,
     contact: contactReducer,
+    threeDPlans: threeDPlansReducer,
   },
 });
 

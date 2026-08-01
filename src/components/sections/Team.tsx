@@ -1,18 +1,15 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { User } from 'lucide-react';
 import { getImageUrl } from 'services/api';
 import { useAppDispatch, useAppSelector } from 'store/hooks';
 import { fetchTeamMembers } from 'store/teamSlice';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 export const Team: React.FC = () => {
   const dispatch = useAppDispatch();
   const teamMembers = useAppSelector((state) => state.team.members);
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.1 });
 
   useEffect(() => {
     dispatch(fetchTeamMembers());
@@ -32,15 +29,15 @@ export const Team: React.FC = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          variants={revealVariants.fadeUp}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+          className="text-center mb-16 transform-gpu"
         >
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.2 }}
+            variants={revealVariants.fadeDown}
+            initial="hidden"
+            animate={isRevealed ? 'visible' : 'hidden'}
             className="inline-flex items-center px-4 py-1.5 border border-royal-blue/30 bg-royal-blue/5 rounded-full mb-6"
           >
             <span className="text-royal-blue-bright text-xs tracking-[0.2em] font-body font-semibold uppercase">
@@ -56,15 +53,18 @@ export const Team: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          variants={revealVariants.staggerContainer}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+        >
           {teamMembers.map((member, index) => (
             <motion.div
               key={member.id || index}
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              variants={revealVariants.staggerItemScale}
               whileHover={{ y: -6 }}
-              className="group relative"
+              className="group relative transform-gpu"
             >
               <div className="relative overflow-hidden bg-zinc-50 border border-zinc-200/80 hover:border-gold/40 hover:shadow-xl hover:shadow-zinc-200/40 transition-all duration-300 h-full p-8 flex flex-col items-center text-center rounded-xl">
                 {/* Avatar Placeholder or Image */}
@@ -99,7 +99,7 @@ export const Team: React.FC = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

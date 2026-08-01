@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getLenisInstance } from 'lib/lenis';
+import { isInitialPageLoadReload, isOriginalLoadLocation } from 'lib/pageLoad';
 import { Hero } from 'components/sections/Hero';
 import { StatsSection } from 'components/sections/StatsSection';
 import { About } from 'components/sections/About';
@@ -26,7 +27,12 @@ export const Home: React.FC<HomeProps> = ({ onContactClick }) => {
   useLayoutEffect(() => {
     const targetSection = routeState?.scrollTo;
 
-    if (!targetSection) {
+    // Only the entry the document actually loaded with counts as "reload" —
+    // a later in-app navigation to Home with a scrollTo target (e.g. from
+    // the Services/Projects pages) must still scroll to that section.
+    const isPageReload = isInitialPageLoadReload && isOriginalLoadLocation(location.key);
+
+    if (!targetSection || isPageReload) {
       setIsReady(true);
       return;
     }
@@ -50,7 +56,7 @@ export const Home: React.FC<HomeProps> = ({ onContactClick }) => {
       }
     };
 
-    requestAnimationFrame(scrollToTarget);
+    const rafId = requestAnimationFrame(scrollToTarget);
 
     const timer1 = setTimeout(scrollToTarget, 150);
     const timer2 = setTimeout(scrollToTarget, 400);
@@ -62,11 +68,12 @@ export const Home: React.FC<HomeProps> = ({ onContactClick }) => {
     }, 500);
 
     return () => {
+      cancelAnimationFrame(rafId);
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(showTimer);
     };
-  }, [routeState]);
+  }, [routeState, location.key]);
 
   return (
     <>

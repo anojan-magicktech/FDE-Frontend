@@ -1,12 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { useScrollReveal, revealVariants } from 'hooks/useScrollReveal';
 
 export const About: React.FC = () => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.15,
-  });
+  const { ref, isRevealed } = useScrollReveal({ threshold: 0.12 });
 
   return (
     <section
@@ -20,12 +17,15 @@ export const About: React.FC = () => {
       <div className="absolute left-0 bottom-1/4 w-[500px] h-[500px] bg-gold/5 rounded-full blur-3xl opacity-40 z-0 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+          variants={revealVariants.staggerContainer}
+          initial="hidden"
+          animate={isRevealed ? 'visible' : 'hidden'}
+        >
           {/* Image Container with hardware-accelerated fade-up to prevent stutter */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+            variants={revealVariants.fadeLeft}
             className="transform-gpu"
           >
             <div className="relative h-[400px] lg:h-[520px] overflow-hidden rounded-2xl border border-zinc-150 shadow-xl group">
@@ -49,9 +49,7 @@ export const About: React.FC = () => {
 
           {/* Text Content */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 1, 0.5, 1] }}
+            variants={revealVariants.fadeRight}
             className="space-y-8 transform-gpu"
           >
             <div>
@@ -89,7 +87,7 @@ export const About: React.FC = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

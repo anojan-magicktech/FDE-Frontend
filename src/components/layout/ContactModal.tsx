@@ -36,19 +36,20 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
   const status = useAppSelector((state) => state.contact.status);
   const isSubmitting = status === 'loading';
 
-  // Safeguard: Stop Lenis scroll when modal is active
+  // Stop Lenis's smooth-scroll while the modal is open. Background scroll
+  // locking itself (and the scrollbar-width compensation that prevents the
+  // page from shifting) is already handled by Radix's Dialog — setting
+  // body.overflow manually here on top of that was fighting it and causing
+  // the visible jump.
   useEffect(() => {
     if (isOpen) {
       getLenisInstance()?.stop();
-      document.body.style.overflow = 'hidden';
     } else {
       getLenisInstance()?.start();
-      document.body.style.overflow = '';
     }
 
     return () => {
       getLenisInstance()?.start();
-      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -88,7 +89,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="flex flex-col bg-zinc-950 border border-gold/20 text-white w-[calc(100vw-1rem)] sm:w-[95vw] max-w-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain custom-scrollbar p-0 gap-0 shadow-2xl shadow-gold/5 z-[60] rounded-xl"
+        className="flex flex-col bg-zinc-950/80 backdrop-blur-xl border border-gold/20 text-white w-[calc(100vw-1rem)] sm:w-[95vw] max-w-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain custom-scrollbar p-0 gap-0 shadow-2xl shadow-gold/5 z-[60] rounded-xl"
         data-testid="contact-modal"
       >
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
